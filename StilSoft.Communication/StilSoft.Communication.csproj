@@ -4,7 +4,7 @@
 		<TargetFrameworks>net45;netstandard2.0</TargetFrameworks>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
-		<Version>1.0.1</Version>
+		<Version>1.0.2</Version>
 		<Authors>Sase</Authors>
 		<Company>Stil Soft</Company>
 		<Copyright>Copyright © 2021 Stil Soft</Copyright>
