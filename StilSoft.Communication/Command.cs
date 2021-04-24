@@ -4,7 +4,7 @@ using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using StilSoft.Communication.Exceptions;
-using StilSoft.Core.Exceptions;
+using StilSoft.Exceptions;
 
 namespace StilSoft.Communication
 {
