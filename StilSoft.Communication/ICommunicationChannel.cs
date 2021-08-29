@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 
 namespace StilSoft.Communication
 {
@@ -11,5 +12,7 @@ namespace StilSoft.Communication
         Task<IResponse> ReceiveAsync();
         Task<IResponse> SendReceiveAsync(IRequest request);
         Task SetConfigurationAsync(IChannelConfiguration configuration);
+        Task<int> StartPeriodicMessageAsync(IRequest request, TimeSpan interval);
+        Task StopPeriodicMessageAsync(int messageId);
     }
 }
