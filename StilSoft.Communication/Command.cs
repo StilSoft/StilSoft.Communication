@@ -3,18 +3,17 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
-using StilSoft.Communication.Exceptions;
 using StilSoft.Exceptions;
 
 namespace StilSoft.Communication
 {
     public class Command : ICommand
     {
-        private readonly TimeSpan defaultCommandExecutionTimeout = TimeSpan.FromSeconds(1);
         private readonly ICommunicationChannel communicationChannel;
 
         public bool SendOnly { get; set; }
         public TimeSpan DelayAfterSend { get; set; }
+        public TimeSpan? ReceiveTimeout { get; set; }
         public IRequest Request { get; set; }
         public IReadOnlyCollection<IValidator> RequestValidators { get; set; }
         public IReadOnlyCollection<IResponseHandler> ResponseHandlers { get; set; }
@@ -26,15 +25,10 @@ namespace StilSoft.Communication
             this.communicationChannel = communicationChannel;
         }
 
-        public virtual async Task ExecuteAsync(int retryCount = 0, TimeSpan timeout = default,
-            Action<int> onRetry = null, CancellationToken cancellationToken = default)
+        public virtual async Task ExecuteAsync(int retryCount = 0, Action<int> onRetry = null,
+            CancellationToken cancellationToken = default)
         {
             int totalRetries = 0;
-
-            if (timeout == TimeSpan.Zero)
-            {
-                timeout = this.defaultCommandExecutionTimeout;
-            }
 
             if (this.communicationChannel == null)
             {
@@ -59,7 +53,7 @@ namespace StilSoft.Communication
                     }
                     else
                     {
-                        response = await this.communicationChannel.SendReceiveAsync(this.Request);
+                        response = await this.communicationChannel.SendReceiveAsync(this.Request, this.ReceiveTimeout);
                     }
 
                     sendSuccessful = true;
@@ -82,7 +76,7 @@ namespace StilSoft.Communication
 
             if (!this.SendOnly)
             {
-                response = await ProcessResponseAsync(response, timeout);
+                response = await ProcessResponseAsync(response, this.ReceiveTimeout);
 
                 ValidateResponse(response);
 
@@ -183,7 +177,7 @@ namespace StilSoft.Communication
             }
         }
 
-        private async Task<IResponse> ProcessResponseAsync(IResponse response, TimeSpan timeout)
+        private async Task<IResponse> ProcessResponseAsync(IResponse response, TimeSpan? receiveTimeout = default)
         {
             ResponseHandlerResult result;
 
@@ -193,26 +187,19 @@ namespace StilSoft.Communication
 
             do
             {
-                result = await HandleResponseAsync(response);
+                result = await HandleResponseAsync(response, receiveTimeout);
 
                 if (result.State == ResponseHandlerState.ResponseChanged)
                 {
                     response = result.Response;
                     sw.Restart();
                 }
-            } while (result.State == ResponseHandlerState.ResponseChanged && sw.Elapsed < timeout);
-
-            sw.Stop();
-
-            if (sw.Elapsed >= timeout)
-            {
-                throw new CommandTimeoutException("Response timeout");
-            }
+            } while (result.State == ResponseHandlerState.ResponseChanged);
 
             return response;
         }
 
-        private async Task<ResponseHandlerResult> HandleResponseAsync(IResponse response)
+        private async Task<ResponseHandlerResult> HandleResponseAsync(IResponse response, TimeSpan? receiveTimeout = default)
         {
             if (this.ResponseHandlers == null || this.ResponseHandlers.Count == 0)
             {
@@ -222,7 +209,7 @@ namespace StilSoft.Communication
             foreach (IResponseHandler responseHandler in this.ResponseHandlers)
             {
                 ResponseHandlerResult responseHandlerResult =
-                    await responseHandler.HandleAsync(response, this.Request, this.communicationChannel);
+                    await responseHandler.HandleAsync(response, this.Request, this.communicationChannel, receiveTimeout);
 
                 if (responseHandlerResult.State == ResponseHandlerState.ResponseChanged ||
                     responseHandlerResult.State == ResponseHandlerState.Complete)
@@ -284,11 +271,10 @@ namespace StilSoft.Communication
         {
         }
 
-        public override async Task ExecuteAsync(int retryCount = 0, TimeSpan timeout = default,
-            Action<int> onRetry = null,
+        public override async Task ExecuteAsync(int retryCount = 0, Action<int> onRetry = null,
             CancellationToken cancellationToken = default)
         {
-            await base.ExecuteAsync(retryCount, timeout, onRetry, cancellationToken);
+            await base.ExecuteAsync(retryCount, onRetry, cancellationToken);
 
             byte[] parsedResponse = ParseResponse(this.Response, this.ResponseParser);
 

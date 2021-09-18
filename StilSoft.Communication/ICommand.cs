@@ -15,7 +15,7 @@ namespace StilSoft.Communication
         IReadOnlyCollection<IResponseValidator> ResponseValidators { get; }
         IResponse Response { get; }
 
-        Task ExecuteAsync(int retryCount = 0, TimeSpan timeout = default, Action<int> onRetry = null,
+        Task ExecuteAsync(int retryCount = 0, Action<int> onRetry = null,
             CancellationToken cancellationToken = default);
     }
 

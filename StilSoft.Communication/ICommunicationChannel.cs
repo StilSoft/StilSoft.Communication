@@ -9,8 +9,8 @@ namespace StilSoft.Communication
         Task CloseAsync();
         Task<bool> IsOpenAsync();
         Task SendAsync(IRequest request);
-        Task<IResponse> ReceiveAsync();
-        Task<IResponse> SendReceiveAsync(IRequest request);
+        Task<IResponse> ReceiveAsync(TimeSpan? receiveTimeout = default);
+        Task<IResponse> SendReceiveAsync(IRequest request, TimeSpan? receiveTimeout = default);
         Task SetConfigurationAsync(IChannelConfiguration configuration);
         Task<int> StartPeriodicMessageAsync(IRequest request, TimeSpan interval);
         Task StopPeriodicMessageAsync(int messageId);
