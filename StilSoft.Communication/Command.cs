@@ -181,10 +181,6 @@ namespace StilSoft.Communication
         {
             ResponseHandlerResult result;
 
-            var sw = new Stopwatch();
-
-            sw.Start();
-
             do
             {
                 result = await HandleResponseAsync(response, receiveTimeout);
@@ -192,11 +188,10 @@ namespace StilSoft.Communication
                 if (result.State == ResponseHandlerState.ResponseChanged)
                 {
                     response = result.Response;
-                    sw.Restart();
                 }
             } while (result.State == ResponseHandlerState.ResponseChanged);
 
-            return response;
+            return result.Response;
         }
 
         private async Task<ResponseHandlerResult> HandleResponseAsync(IResponse response, TimeSpan? receiveTimeout = default)
