@@ -7,7 +7,7 @@ namespace StilSoft.Communication
 {
     public interface ICommand
     {
-        bool SendOnly { get; }
+        CommandType CommandType { get; }
         TimeSpan DelayAfterSend { get; }
         IRequest Request { get; }
         IReadOnlyCollection<IValidator> RequestValidators { get; }

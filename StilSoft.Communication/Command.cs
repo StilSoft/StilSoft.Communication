@@ -10,7 +10,7 @@ namespace StilSoft.Communication
     {
         private readonly ICommunicationChannel communicationChannel;
 
-        public bool SendOnly { get; set; }
+        public CommandType CommandType { get; set; }
         public TimeSpan DelayAfterSend { get; set; }
         public TimeSpan? ReceiveTimeout { get; set; }
         public IRequest Request { get; set; }
@@ -34,8 +34,11 @@ namespace StilSoft.Communication
                 throw new InvalidOperationException("Communication channel cannot be null");
             }
 
-            ValidateRequest();
-            ValidateAndSetAdditionalRequestData();
+            if (this.CommandType == CommandType.Send || this.CommandType == CommandType.SendReceive)
+            {
+                ValidateRequest();
+                ValidateAndSetAdditionalRequestData();
+            }
 
             IResponse response = null;
             bool sendSuccessful = false;
@@ -46,13 +49,19 @@ namespace StilSoft.Communication
 
                 try
                 {
-                    if (this.SendOnly)
+                    switch (this.CommandType)
                     {
-                        await this.communicationChannel.SendAsync(this.Request);
-                    }
-                    else
-                    {
-                        response = await this.communicationChannel.SendReceiveAsync(this.Request, this.ReceiveTimeout);
+                        case CommandType.SendReceive:
+                            response = await this.communicationChannel.SendReceiveAsync(this.Request, this.ReceiveTimeout);
+                            break;
+                        case CommandType.Send:
+                            await this.communicationChannel.SendAsync(this.Request);
+                            break;
+                        case CommandType.Receive:
+                            response = await this.communicationChannel.ReceiveAsync(this.ReceiveTimeout);
+                            break;
+                        default:
+                            throw new ArgumentOutOfRangeException();
                     }
 
                     sendSuccessful = true;
@@ -73,7 +82,7 @@ namespace StilSoft.Communication
                 }
             } while (!sendSuccessful);
 
-            if (!this.SendOnly)
+            if (response != null)
             {
                 response = await ProcessResponseAsync(response, this.ReceiveTimeout);
 
@@ -126,7 +135,7 @@ namespace StilSoft.Communication
             }
         }
 
-        public void ValidateAndSetAdditionalRequestData()
+        private void ValidateAndSetAdditionalRequestData()
         {
             if (!(this.Request is IRequestWithAdditionalData request) || request.AdditionalData == null ||
                 request.AdditionalData.Count == 0)
