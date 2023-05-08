@@ -14,10 +14,10 @@ namespace StilSoft.Communication
         public TimeSpan DelayAfterSend { get; set; }
         public TimeSpan? ReceiveTimeout { get; set; }
         public IRequest Request { get; set; }
+        public IResponse Response { get; private set; }
         public IReadOnlyCollection<IValidator> RequestValidators { get; set; }
         public IReadOnlyCollection<IResponseHandler> ResponseHandlers { get; set; }
         public IReadOnlyCollection<IResponseValidator> ResponseValidators { get; set; }
-        public IResponse Response { get; private set; }
 
         public Command(ICommunicationChannel communicationChannel)
         {
