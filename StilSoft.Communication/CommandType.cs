@@ -4,6 +4,7 @@
     {
         SendReceive,
         Send,
-        Receive
+        Receive,
+        PeriodicSend
     }
 }

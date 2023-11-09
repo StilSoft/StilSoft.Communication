@@ -60,6 +60,10 @@ namespace StilSoft.Communication
                         case CommandType.Receive:
                             response = await this.communicationChannel.ReceiveAsync(this.ReceiveTimeout);
                             break;
+                        case CommandType.PeriodicSend:
+                            int id = await this.communicationChannel.StartPeriodicMessageAsync(this.Request, TimeSpan.FromSeconds(1));
+                            break;
+
                         default:
                             throw new ArgumentOutOfRangeException();
                     }
